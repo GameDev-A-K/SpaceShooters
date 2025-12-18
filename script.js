@@ -20,10 +20,10 @@ const BACKGROUNDS = [
     "Assets/Images/Backgrounds/space-background-1.png",
     "Assets/Images/Backgrounds/space-background-2.png",
     "Assets/Images/Backgrounds/space-background-3.mp4",
-    "Assets/Images/Backgrounds/space-background-4.png",
     "Assets/Images/Backgrounds/space-background-5.png",
     "Assets/Images/Backgrounds/space-background-7.gif",
-    "Assets/Images/Backgrounds/special-background.png",
+    "Assets/Images/Backgrounds/special-background-2.gif",
+    "Assets/Images/Backgrounds/special-background-3.png"
 ];
 
 const backGroundVideo = document.createElement("video");
@@ -39,39 +39,45 @@ backGroundImage.src = BACKGROUNDS[1];
 const LEVEL_SETTINGS = [
     {
         scoreThreshold: 0,
-        backgroundSrc: BACKGROUNDS[1],
-        alienSpeed: 4.5,
-        shootCooldown: 300,
+        backgroundSrc: BACKGROUNDS[4],
+        alienSpeed: 6.0,
+        shootCooldown: 250,
     },
     {
         scoreThreshold: 500,
-        backgroundSrc: BACKGROUNDS[5], 
-        alienSpeed: 6.0,               
-        shootCooldown: 300,
+        backgroundSrc: BACKGROUNDS[7], 
+        alienSpeed: 8.0,               
+        shootCooldown: 250,
     },
     {
         scoreThreshold: 1000,
-        backgroundSrc: BACKGROUNDS[7], 
-        alienSpeed: 7.5,               
-        shootCooldown: 300,
+        backgroundSrc: BACKGROUNDS[1], 
+        alienSpeed: 10.0,               
+        shootCooldown: 250,
     },
     {
         scoreThreshold: 1500,
         backgroundSrc: BACKGROUNDS[2], 
-        alienSpeed: 9,               
-        shootCooldown: 250,
+        alienSpeed: 10.5,               
+        shootCooldown: 200,
     },
     {
         scoreThreshold: 2000,
-        backgroundSrc: BACKGROUNDS[6],
-        alienSpeed: 10.5,              
-        shootCooldown: 250,
+        backgroundSrc: BACKGROUNDS[3],
+        alienSpeed: 11,              
+        shootCooldown: 200,
     },
     {
         scoreThreshold: 2500,
-        backgroundSrc: BACKGROUNDS[3],
+        backgroundSrc: BACKGROUNDS[6],
         alienSpeed: 12,              
-        shootCooldown: 250,
+        shootCooldown: 175,
+    },
+    {
+        scoreThreshold: 3000,
+        backgroundSrc: BACKGROUNDS[5],
+        alienSpeed: 12,              
+        shootCooldown: 175,
     },
 ];
 
@@ -86,10 +92,11 @@ const IMAGES = {
     ship: SHIP_SKINS[0],
     enemyShip: "Assets/Images/Ships/enemy-spaceship.png",
     explosion: "Assets/Images/Effects/explosion.png",
-    shoot: "Assets/Images/Effects/shoot.png",
+    shoot: "Assets/Images/Effects/muzzle-flash.png",
     meteorite: "Assets/Images/Entities/meteorite.png",
     planet: "Assets/Images/Entities/planet.png",
-    pumpkin: "Assets/Images/Entities/pumpkin.png"
+    gingerbread: "Assets/Images/Entities/gingerbread.png",
+    present: "Assets/Images/Entities/present.png"
 };
 
 const loadedImages = {};
@@ -125,6 +132,8 @@ let currentLevel = 1;
 let levelUpMessage = null;
 let levelUpTimer = null;
 
+let merryChristmasTimer = 0;
+
 let score = 0;
 
 let xVelocity = 0;
@@ -143,7 +152,7 @@ let bulletVelocityY = -20;
 let shootFlash = null;
 
 let canShoot = true;
-let shootCooldown = 300;
+let shootCooldown = 250;
 
 let alienArray = [];
 
@@ -157,7 +166,6 @@ let explosionArray = [];
 let animationFrameId;
 
 let enemyInterval;
-let speedInterval;
 
 let enemySpawnInterval = 1000;
 
@@ -315,10 +323,11 @@ function startIntervals() {
     if(!enemyInterval) {
         enemyInterval = setInterval(generateEnemy, enemySpawnInterval);
     }
-    if(!speedInterval){
-        speedInterval = setInterval(() => {
-            alienVelocityY += 0.5;
-        }, 2500);
+}
+function clearIntervals() {
+    if(enemyInterval){
+        clearInterval(enemyInterval);
+        enemyInterval = null; 
     }
 }
 function nextTick(timeStamp){
@@ -342,6 +351,7 @@ function nextTick(timeStamp){
             drawEnemies();
             drawExplosion();
             drawLevelUpMessage();
+            drawMerryChristmasMessage();
             drawHud();
 
             redrawFrame = false;
@@ -408,11 +418,7 @@ function togglePause() {
         paused = true;
         pauseBtn.textContent = "Resume";
 
-        clearInterval(enemyInterval);
-        enemyInterval = null; 
-        
-        clearInterval(speedInterval);
-        speedInterval = null;
+        clearIntervals();
     }
 }
 function clearScore() {
@@ -445,7 +451,7 @@ function drawGameOverScreen() {
     }
         
     context.fillStyle = "white";
-    context.font = "48px Arial"
+    context.font = "bold 48px Arial"
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText("Game over!", gameBoard.width / 2, gameBoard.height / 2);
@@ -455,7 +461,7 @@ function drawGameOverScreen() {
 }
 function drawPauseScreen(){
     context.fillStyle = "white";
-    context.font = "48px Arial"
+    context.font = "bold 48px Arial"
     context.textAlign = "center";
     context.textBaseline = "middle";
 
@@ -494,16 +500,28 @@ function showLevelUpMessage(level) {
     clearTimeout(levelUpTimer);
     levelUpTimer = setTimeout(() => {
         levelUpMessage = null;
-    }, 1000)
+    }, 1000);
 }
 function drawLevelUpMessage() {
     if(levelUpMessage) {
         context.fillStyle = "white";
-        context.font = "48px Arial";
+        context.font = "bold 48px Arial";
         context.textAlign = "center";
         context.textBaseline = "middle";
 
         context.fillText(levelUpMessage, gameBoard.width / 2, gameBoard.height / 2);
+    }
+}
+function drawMerryChristmasMessage() {
+    if(merryChristmasTimer > 0){
+        context.fillStyle = "green";
+        context.font = "bold 42px Arial";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+
+        context.fillText("MERRY CHRISTMAS🎄", gameBoard.width / 2, gameBoard.height / 2);   
+
+        merryChristmasTimer--;
     }
 }
 function drawShip(){
@@ -535,8 +553,11 @@ function drawEnemies(){
                 case 'planet': 
                     context.drawImage(loadedImages['planet'], alien.x, alien.y, alien.width, alien.height);
                     break;
-                case 'pumpkin':
-                    context.drawImage(loadedImages['pumpkin'], alien.x, alien.y, alien.width, alien.height);
+                case 'gingerbread':
+                    context.drawImage(loadedImages['gingerbread'], alien.x, alien.y, alien.width, alien.height);
+                    break;
+                case 'present':
+                    context.drawImage(loadedImages['present'], alien.x, alien.y, alien.width, alien.height);
                     break;
             }
         }
@@ -557,7 +578,7 @@ function drawExplosion(){
 }
 function drawShootFlash() {
     if(shootFlash) {
-        context.drawImage(loadedImages['shoot'], shootFlash.x, shootFlash.y, unitSize * 2, unitSize * 2);
+        context.drawImage(loadedImages['shoot'], shootFlash.x, shootFlash.y, unitSize * 1.5, unitSize * 2);
         shootFlash.timer--;
 
         if(shootFlash.timer <= 0) {
@@ -626,7 +647,7 @@ function stopShip(event){
     }
 }
 function shootBullet(event){
-    if(event.code === "Space" && canShoot){
+    if(event.code === "Space" && canShoot && running && !paused){
         canShoot = false;
 
         let bullet = {
@@ -641,7 +662,7 @@ function shootBullet(event){
         clonedShootingSound.play();
 
         shootFlash = {
-            x: shipX + unitSize / 2,
+            x: shipX + shipWidth / 2 - (unitSize * 1.5) / 2,
             y: shipY - 50,
             timer: 2
         }
@@ -685,20 +706,26 @@ function generateEnemy(){
             type: 'planet',
             points: 100
         }
-
-        alienArray.push(enemy);
-    } else if (typeChance < 0.15) {
+    } else if (typeChance < 0.05) {
         enemy = {
             x: randomX,
             y: 0,
             width: alienWidth - 15,
             height: alienHeight - 15,
             alive: true,
-            type: 'pumpkin',
+            type: 'present',
+            points: 100,
+        };
+    } else if (typeChance < 0.25) {
+        enemy = {
+            x: randomX,
+            y: 0,
+            width: alienWidth - 15,
+            height: alienHeight - 15,
+            alive: true,
+            type: 'gingerbread',
             points: 50,
         };
-
-        alienArray.push(enemy);
     } else if(typeChance < 0.35) {
         const scale = 0.5 + Math.random() * 0.85;
 
@@ -716,8 +743,6 @@ function generateEnemy(){
         };
 
         if(scale > 1) enemy['easterEgg'] = ':)';
-
-        alienArray.push(enemy);
     }
     else {
         enemy = {
@@ -729,9 +754,14 @@ function generateEnemy(){
             type: 'alien',
             points: 10
         }
+    }
 
+    if(enemy){
         alienArray.push(enemy);
     }
+}
+function generateMain() {
+    
 }
 function checkCollisions() {
     for(let i = 0; i < alienArray.length; i++){
@@ -754,6 +784,10 @@ function checkCollisions() {
                 } else {
                     const clonedSpecialSound = loadedSounds['special'].cloneNode();
                     clonedSpecialSound.play();
+                }
+
+                if(Math.random() < 0.01){
+                    merryChristmasTimer = 120;
                 }
 
                 explosionArray.push({
@@ -829,13 +863,9 @@ function resetGame(){
             backGroundVideo.currentTime = 0;
         }
 
-        clearInterval(enemyInterval);
-        enemyInterval = null;
-
         enemySpawnInterval = 1000;
 
-        clearInterval(speedInterval);
-        speedInterval = null;
+        clearIntervals();
 
         cancelAnimationFrame(animationFrameId);
 
