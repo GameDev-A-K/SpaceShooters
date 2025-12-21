@@ -15,7 +15,7 @@ body{
     font-size: 1.25em;
     z-index: 9999;
 }
-.spinner {
+#spinner {
     border: 5px solid #333;
     border-top: 5px solid white;
     border-radius: 50%;
@@ -40,6 +40,20 @@ body{
     align-items: center;
     flex-direction: column;
     gap: 5px;
+}
+#christmasLights {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 0px;
+    z-index: 9998;
+    position: absolute;
+    top: 50px;
+}
+#christmasLights img {
+    height: 50px;
+    width: 175px;
 }
 #changeSkinContainer {
     display: flex;

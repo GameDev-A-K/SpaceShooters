@@ -33,6 +33,8 @@ backGroundVideo.playsInline = true;
 backGroundVideo.loop = true;
 backGroundVideo.muted = true;
 
+let videoReady = true;
+
 const backGroundImage = new Image();
 backGroundImage.src = BACKGROUNDS[1];
 
@@ -58,25 +60,25 @@ const LEVEL_SETTINGS = [
     {
         scoreThreshold: 1500,
         backgroundSrc: BACKGROUNDS[2], 
-        alienSpeed: 10.5,               
+        alienSpeed: 12.0,               
         shootCooldown: 200,
     },
     {
         scoreThreshold: 2000,
         backgroundSrc: BACKGROUNDS[3],
-        alienSpeed: 11,              
+        alienSpeed: 14.0,              
         shootCooldown: 200,
     },
     {
         scoreThreshold: 2500,
         backgroundSrc: BACKGROUNDS[6],
-        alienSpeed: 12,              
+        alienSpeed: 18.0,              
         shootCooldown: 175,
     },
     {
         scoreThreshold: 3000,
         backgroundSrc: BACKGROUNDS[5],
-        alienSpeed: 12,              
+        alienSpeed: 20.0,              
         shootCooldown: 175,
     },
 ];
@@ -344,12 +346,15 @@ function nextTick(timeStamp){
         checkUpgrades();
 
         if(redrawFrame) {
+            context.shadowBlur = 0;
             drawBackGround();
+            drawShootFlash();
+            drawExplosion();
+            
+            setShadows();
             drawShip();
             drawBullet(deltaTime);
-            drawShootFlash();
             drawEnemies();
-            drawExplosion();
             drawLevelUpMessage();
             drawMerryChristmasMessage();
             drawHud();
@@ -372,6 +377,12 @@ function nextTick(timeStamp){
             drawPauseScreen();
         }
     }
+}
+function setShadows() {
+    context.shadowColor = "black";
+    context.shadowBlur = 15;
+    context.shadowOffsetX = 0;
+    context.shadowOffsetY = 0;
 }
 function saveScore(score) {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
@@ -454,6 +465,7 @@ function drawGameOverScreen() {
     context.font = "bold 48px Arial"
     context.textAlign = "center";
     context.textBaseline = "middle";
+    
     context.fillText("Game over!", gameBoard.width / 2, gameBoard.height / 2);
 
     const clonedGameOverSound = loadedSounds['gameOver'].cloneNode();
@@ -528,9 +540,14 @@ function drawShip(){
     context.drawImage(ship, shipX, shipY, shipWidth, shipHeight); 
 }
 function drawBackGround(){
-    if(currentLevel === 5 && backGroundVideo.readyState >= 2){
-        if(backGroundVideo.paused) backGroundVideo.play();
-        context.drawImage(backGroundVideo, 0, 0, gameBoard.width, gameBoard.height);
+    if(currentLevel === 5){
+        if(videoReady){
+            if(backGroundVideo.paused) backGroundVideo.play();
+            context.drawImage(backGroundVideo, 0, 0, gameBoard.width, gameBoard.height);
+        } else {
+            context.fillStyle = "black";
+            context.fillRect(0, 0, gameBoard.width, gameBoard.height);
+        }
     } else {
         context.drawImage(backGroundImage, 0, 0, gameBoard.width, gameBoard.height);
     }
@@ -828,11 +845,16 @@ function applyLevelSettings(levelIndex) {
     alienVelocityY = settings.alienSpeed;
     shootCooldown = settings.shootCooldown;
 
-    enemySpawnInterval -= 200;
+    enemySpawnInterval -= 100;
 
     if(settings.backgroundSrc.endsWith('.mp4')){
+        this.videoReady = false;
         backGroundVideo.src = settings.backgroundSrc; 
         backGroundVideo.load();
+
+        backGroundVideo.oncanplay = () => {
+            this.videoReady = true;
+        }
     } else {
         backGroundImage.src = settings.backgroundSrc;
 
