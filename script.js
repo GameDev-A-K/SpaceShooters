@@ -126,6 +126,23 @@ const SOUNDS = {
 
 const loadedSounds = {};
 
+const COLORS = {
+    shipBullet: "#00E5FF",
+    bossBullet: "#FF6D00",
+    levelText: {
+        default: "#00FFFF",
+        special: "#FF00FF"
+    },
+    hud: "#FFFFFF",
+    hudHighlight: "#FFD700",
+    status: {
+        optimal: "#00FF00", 
+        warning: "#FFD700",
+        critical: "#FF4500"
+    },
+    dark: "#000000"
+}
+
 let running = false;
 let paused = false;
 
@@ -391,7 +408,7 @@ function nextTick(timeStamp) {
     }
 }
 function setShadows() {
-    context.shadowColor = "black";
+    context.shadowColor = COLORS.dark;
     context.shadowBlur = 15;
     context.shadowOffsetX = 0;
     context.shadowOffsetY = 0;
@@ -473,7 +490,7 @@ function drawGameOverScreen() {
         displayScores();
     }
         
-    context.fillStyle = "white";
+    context.fillStyle = COLORS.hud;
     context.font = "bold 48px Arial"
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -484,7 +501,7 @@ function drawGameOverScreen() {
     clonedGameOverSound.play();
 }
 function drawPauseScreen(){
-    context.fillStyle = "white";
+    context.fillStyle = COLORS.hud;
     context.font = "bold 48px Arial"
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -492,29 +509,29 @@ function drawPauseScreen(){
     context.fillText("Game paused!", gameBoard.width / 2, gameBoard.height / 2);
 }
 function drawHud() {
-    context.fillStyle = "white";
+    context.fillStyle = COLORS.hud;
     context.font = "20px Arial";
     context.textAlign = "left";
     context.textBaseline = "top";
 
     context.fillText("Level " + currentLevel, 10, 10);
 
-    if(fps >= 50) context.fillStyle = "green";
-    else if(fps >= 30) context.fillStyle = "yellow";
-    else context.fillStyle = "red";
+    if(fps >= 50) context.fillStyle = COLORS.status.optimal;
+    else if(fps >= 30) context.fillStyle = COLORS.status.warning;
+    else context.fillStyle = COLORS.status.critical;
 
     context.fillText("FPS " + fps.toFixed(2), 10, 35);
 
-    context.fillStyle = "white";
+    context.fillStyle = COLORS.hud;
 
     context.textAlign = "right";
     
     context.fillText("Best score: " + getMaxScore(), gameBoard.width - 10, 10);
 
     if(score >= getMaxScore()) {
-        context.fillStyle = "gold";
+        context.fillStyle = COLORS.hudHighlight;
     } else {
-        context.fillStyle = "white";
+        context.fillStyle = COLORS.hud;
     }
 
     context.fillText("Score: " + score, gameBoard.width - 10, 35);
@@ -528,7 +545,7 @@ function showLevelUpMessage(level) {
 }
 function drawLevelUpMessage() {
     if(levelUpMessage) {
-        context.fillStyle = "white";
+        context.fillStyle = LEVEL_SETTINGS[currentLevel - 1].bossLevel ? COLORS.levelText.special : COLORS.levelText.default;
         context.font = "bold 48px Arial";
         context.textAlign = "center";
         context.textBaseline = "middle";
@@ -539,7 +556,7 @@ function drawLevelUpMessage() {
 // Winter season
 function drawMerryChristmasMessage() {
     if(merryChristmasTimer > 0){
-        context.fillStyle = "green";
+        context.fillStyle = COLORS.status.optimal;
         context.font = "bold 42px Arial";
         context.textAlign = "center";
         context.textBaseline = "middle";
@@ -558,7 +575,7 @@ function drawBackGround(){
             if(backGroundVideo.paused) backGroundVideo.play();
             context.drawImage(backGroundVideo, 0, 0, gameBoard.width, gameBoard.height);
         } else {
-            context.fillStyle = "black";
+            context.fillStyle = COLORS.dark;
             context.fillRect(0, 0, gameBoard.width, gameBoard.height);
         }
     } else {
@@ -600,7 +617,7 @@ function drawEnemies(){
 }
 function drawHealth(alien) {
     context.font = "20px Arial";
-    context.fillStyle = alien.health >= Math.floor(alien.maxHealth / 2) ? "green" : "red";
+    context.fillStyle = alien.health >= Math.floor(alien.maxHealth / 2) ? COLORS.status.optimal : COLORS.status.critical;
     context.fillText(alien.health, alien.x + (alien.width / 2 + 10), alien.y + alien.height);
 }
 function drawExplosion(){
@@ -732,7 +749,7 @@ function createBullet(name) {
         width: unitSize / 8,
         height: unitSize / 2,
         direction: direction,
-        color: isBoss ? "#FF6D00" : "#00E5FF"
+        color: isBoss ? COLORS.bossBullet : COLORS.shipBullet
     };
 
     const clonedShootingSound = loadedSounds['shooting'].cloneNode();
@@ -939,6 +956,11 @@ function checkCollisions() {
     for (let i = alienArray.length - 1; i >= 0; i--) {
         let alien = alienArray[i];
 
+        if (!alien.alive && alien.y < gameBoard.height) {
+            alienArray.splice(i, 1);
+            continue;
+        }
+
         if(alien.y + alien.height >= gameBoard.height && alien.type !== 'meteorite'){
             running = false;
         }
@@ -952,8 +974,6 @@ function checkCollisions() {
             running = false;
         }
     }
-
-    alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
 }
 function checkUpgrades() {
     const nextLevelIndex = currentLevel;
