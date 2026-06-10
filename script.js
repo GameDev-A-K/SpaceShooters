@@ -44,7 +44,7 @@ const LEVEL_SETTINGS = [
         backgroundSrc: BACKGROUNDS[4],
         alienSpeed: 6.0,
         shootCooldown: 250,
-        bossLevel: true
+        bossLevel: false
     },
     {
         scoreThreshold: 500,
@@ -878,9 +878,9 @@ function generateBossEnemy() {
     }
 }
 function checkCollisions() {
-    for(let i = 0; i < bulletArray.length; i++) {
+    for(let i = bulletArray.length - 1; i >= 0; i--) {
         let bullet = bulletArray[i];
-        if (bulletArray[i].direction === 1) {
+        if (bullet.direction === 1) {
             if(
                 bullet.y < ship.y + ship.height && 
                 bullet.y + bullet.height > ship.y &&
@@ -889,8 +889,8 @@ function checkCollisions() {
                 ){
                     running = false;
                 }
-        } else if (bulletArray[i].direction === -1) {
-            for (let j = 0; j < alienArray.length; j++) {
+        } else if (bullet.direction === -1) {
+            for (let j = alienArray.length - 1; j >= 0; j--) {
                 let alien = alienArray[j];
                 if(alien.alive &&
                     bullet.y < alien.y + alien.height && 
@@ -917,8 +917,8 @@ function checkCollisions() {
                         }
 
                         explosionArray.push({
-                            x: alien.x + alien.width / 2 - alien.width / 2,
-                            y: alien.y + alien.height / 2 - alien.width / 2,
+                            x: alien.x,
+                            y: alien.y,
                             width: alien.width,
                             height: alien.height,
                             timer: 2
@@ -929,30 +929,31 @@ function checkCollisions() {
                     }
 
                     bulletArray.splice(i, 1);
-
-                    if(Math.random() < 0.01){
-                        merryChristmasTimer = 120;
-                    }
             
                     break;
                 }
-
-                if(alien.y + alien.height >= gameBoard.height && alien.type !== 'meteorite'){
-                    running = false;
-                }
-
-                if(
-                    alien.x < ship.x + ship.width &&
-                    alien.x + alien.width > ship.x &&
-                    alien.y < ship.y + ship.height &&
-                    alien.y + alien.height > ship.y
-                ){
-                    running = false;
-                }
             }
-            alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
         }
     }
+
+    for (let i = alienArray.length - 1; i >= 0; i--) {
+        let alien = alienArray[i];
+
+        if(alien.y + alien.height >= gameBoard.height && alien.type !== 'meteorite'){
+            running = false;
+        }
+
+        if(
+            alien.x < ship.x + ship.width &&
+            alien.x + alien.width > ship.x &&
+            alien.y < ship.y + ship.height &&
+            alien.y + alien.height > ship.y
+            ){
+            running = false;
+        }
+    }
+
+    alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
 }
 function checkUpgrades() {
     const nextLevelIndex = currentLevel;
