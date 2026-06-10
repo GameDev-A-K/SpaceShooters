@@ -41,7 +41,7 @@ body{
     flex-direction: column;
     gap: 5px;
 }
-#christmasLights {
+#summerDecorations {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,11 +49,11 @@ body{
     gap: 0px;
     z-index: 9998;
     position: absolute;
-    top: 50px;
+    top: 35px;
 }
-#christmasLights img {
-    height: 50px;
-    width: 175px;
+#summerDecorations img {
+    height: 85px;
+    width: 100px;
 }
 #changeSkinContainer {
     display: flex;

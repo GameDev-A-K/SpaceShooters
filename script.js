@@ -16,14 +16,14 @@ const shootBtn = document.querySelector('#shootBtn');
 const unitSize = 25;
 
 const BACKGROUNDS = [
-    "Assets/Images/Backgrounds/space-background.png",
-    "Assets/Images/Backgrounds/space-background-1.png",
-    "Assets/Images/Backgrounds/space-background-2.png",
-    "Assets/Images/Backgrounds/space-background-3.mp4",
-    "Assets/Images/Backgrounds/space-background-5.png",
-    "Assets/Images/Backgrounds/space-background-7.gif",
-    "Assets/Images/Backgrounds/special-background-2.gif",
-    "Assets/Images/Backgrounds/special-background-3.png"
+    "Assets/Images/Backgrounds/Default/space-background-0.png",
+    "Assets/Images/Backgrounds/Default/space-background-1.png",
+    "Assets/Images/Backgrounds/Default/space-background-2.png",
+    "Assets/Images/Backgrounds/Default/space-background-3.mp4",
+    "Assets/Images/Backgrounds/Default/space-background-4.png",
+    "Assets/Images/Backgrounds/Default/space-background-5.gif",
+    "Assets/Images/Backgrounds/Special/Summer/special-background-0.png",
+    "Assets/Images/Backgrounds/Special/Summer/special-background-1.png"
 ];
 
 const backGroundVideo = document.createElement("video");
@@ -44,42 +44,49 @@ const LEVEL_SETTINGS = [
         backgroundSrc: BACKGROUNDS[4],
         alienSpeed: 6.0,
         shootCooldown: 250,
+        bossLevel: true
     },
     {
         scoreThreshold: 500,
         backgroundSrc: BACKGROUNDS[7], 
         alienSpeed: 8.0,               
         shootCooldown: 250,
+        bossLevel: false
     },
     {
         scoreThreshold: 1000,
         backgroundSrc: BACKGROUNDS[1], 
         alienSpeed: 10.0,               
         shootCooldown: 250,
+        bossLevel: true
     },
     {
         scoreThreshold: 1500,
         backgroundSrc: BACKGROUNDS[2], 
         alienSpeed: 12.0,               
         shootCooldown: 200,
+        bossLevel: false
     },
     {
         scoreThreshold: 2000,
         backgroundSrc: BACKGROUNDS[3],
         alienSpeed: 14.0,              
         shootCooldown: 200,
+        bossLevel: false
     },
     {
         scoreThreshold: 2500,
         backgroundSrc: BACKGROUNDS[6],
         alienSpeed: 18.0,              
         shootCooldown: 175,
+        bossLevel: false
     },
     {
         scoreThreshold: 3000,
         backgroundSrc: BACKGROUNDS[5],
         alienSpeed: 20.0,              
         shootCooldown: 175,
+        bossLevel: true
     },
 ];
 
@@ -94,17 +101,18 @@ const IMAGES = {
     ship: SHIP_SKINS[0],
     enemyShip: "Assets/Images/Ships/enemy-spaceship.png",
     explosion: "Assets/Images/Effects/explosion.png",
-    shoot: "Assets/Images/Effects/muzzle-flash.png",
+    shipShoot: "Assets/Images/Effects/ship-muzzle-flash.png",
+    bossShoot: "Assets/Images/Effects/boss-muzzle-flash.png",
     meteorite: "Assets/Images/Entities/meteorite.png",
     planet: "Assets/Images/Entities/planet.png",
-    gingerbread: "Assets/Images/Entities/gingerbread.png",
-    present: "Assets/Images/Entities/present.png"
+    beachball: "Assets/Images/Entities/Special/Summer/beach-ball.png",
+    melon: "Assets/Images/Entities/Special/Summer/melon.png"
 };
 
 const loadedImages = {};
 
-const ship = new Image();
-ship.src = SHIP_SKINS[0];
+const shipImage = new Image();
+shipImage.src = SHIP_SKINS[0];
 
 const enemyShip = new Image();
 enemyShip.src = "Assets/Images/Ships/enemy-spaceship.png";
@@ -138,27 +146,31 @@ let merryChristmasTimer = 0;
 
 let score = 0;
 
-let xVelocity = 0;
-let touchXVelocity = 0;
-
-let shipWidth = unitSize * 3;
-let shipHeight = unitSize * 3;
-
-let shipX = 0;
-let shipY = 0;
+let ship = {
+    x: 0,
+    y: 0,
+    width: unitSize * 3,
+    height: unitSize * 3,
+    canShoot: true,
+    shootCooldown: 250,
+    xVelocity: 0,
+    touchXVelocity: 0
+}
 
 let bulletArray = [];
 
-let bulletVelocityY = -20;
+let bulletVelocityY = 20;
+let bulletDamage = 25;
 
-let shootFlash = null;
-
-let canShoot = true;
-let shootCooldown = 250;
+let shootFlashes = [];
 
 let alienArray = [];
 
+let bossEnemy = null;
+let bossDefeated = false;
+
 let alienVelocityY = 4.5;
+let bossVelocityX = 5;
 
 let alienWidth = unitSize * 3;
 let alienHeight = unitSize * 3;
@@ -169,7 +181,7 @@ let animationFrameId;
 
 let enemyInterval;
 
-let enemySpawnInterval = 1000;
+let enemySpawnInterval = 1500;
 
 let lastTime = 0;
 
@@ -181,8 +193,8 @@ function resizeCanvas() {
 }
 
 function resizeShipPosition() {
-    shipX = gameBoard.width / 2 - shipWidth / 2;
-    shipY = gameBoard.height - shipHeight * 1.5;
+    ship.x = gameBoard.width / 2 - ship.width / 2;
+    ship.y = gameBoard.height - ship.height * 1.5;
 }
 
 function loadAssets(callBack) {
@@ -250,10 +262,10 @@ window.addEventListener("keydown", (event) => {
 });
 
 function updateVelocity() {
-    touchXVelocity = 0;
-    if(buttonPressed.left) touchXVelocity -= unitSize;
-    if(buttonPressed.right) touchXVelocity += unitSize;
-    if(buttonPressed.shoot && canShoot) shootBullet({ code: 'Space' });
+    ship.touchXVelocity = 0;
+    if(buttonPressed.left) ship.touchXVelocity -= unitSize;
+    if(buttonPressed.right) ship.touchXVelocity += unitSize;
+    if(buttonPressed.shoot && ship.canShoot) shootBullet({ code: 'Space' });
 }
 
 leftBtn.addEventListener('touchstart', (e) => {
@@ -332,7 +344,7 @@ function clearIntervals() {
         enemyInterval = null; 
     }
 }
-function nextTick(timeStamp){
+function nextTick(timeStamp) {
     if(!lastTime) lastTime = timeStamp;
     const deltaTime = (timeStamp - lastTime) / 1000;
     lastTime = timeStamp;
@@ -342,8 +354,9 @@ function nextTick(timeStamp){
     if(running && !paused){
         moveShip(deltaTime);
         moveEnemies(deltaTime);
-        checkCollisions();
+        moveBullets(deltaTime);
         checkUpgrades();
+        checkCollisions();
 
         if(redrawFrame) {
             context.shadowBlur = 0;
@@ -353,10 +366,9 @@ function nextTick(timeStamp){
             
             setShadows();
             drawShip();
-            drawBullet(deltaTime);
+            drawBullets();
             drawEnemies();
             drawLevelUpMessage();
-            drawMerryChristmasMessage();
             drawHud();
 
             redrawFrame = false;
@@ -367,7 +379,7 @@ function nextTick(timeStamp){
     else {
         drawBackGround();
         drawShip();
-        drawBullet();
+        drawBullets();
         drawEnemies();
         drawHud();
 
@@ -437,21 +449,21 @@ function clearScore() {
     displayScores();
 }
 function moveShip(deltaTime){
-    if (isNaN(shipX)) {
-        shipX = gameBoard.width / 2 - shipWidth / 2;
+    if (isNaN(ship.x)) {
+        ship.x = gameBoard.width / 2 - ship.width / 2;
     }
 
-    const prevX = shipX;
+    const prevX = ship.x;
 
-    shipX += (xVelocity + touchXVelocity) * deltaTime * 15;
+    ship.x += (ship.xVelocity + ship.touchXVelocity) * deltaTime * 15;
 
-    if(shipX < 0){
-        shipX = 0;
-    }else if(shipX + (shipWidth) > gameBoard.width){
-        shipX = gameBoard.width - (shipWidth);
+    if(ship.x < 0){
+        ship.x = 0;
+    }else if(ship.x + (ship.width) > gameBoard.width){
+        ship.x = gameBoard.width - (ship.width);
     }
 
-    if(shipX !== prevX) redrawFrame = true;
+    if(ship.x !== prevX) redrawFrame = true;
 }
 function drawGameOverScreen() {
     console.log("Game over!");
@@ -524,6 +536,7 @@ function drawLevelUpMessage() {
         context.fillText(levelUpMessage, gameBoard.width / 2, gameBoard.height / 2);
     }
 }
+// Winter season
 function drawMerryChristmasMessage() {
     if(merryChristmasTimer > 0){
         context.fillStyle = "green";
@@ -537,7 +550,7 @@ function drawMerryChristmasMessage() {
     }
 }
 function drawShip(){
-    context.drawImage(ship, shipX, shipY, shipWidth, shipHeight); 
+    context.drawImage(shipImage, ship.x, ship.y, ship.width, ship.height); 
 }
 function drawBackGround(){
     if(currentLevel === 5){
@@ -560,6 +573,9 @@ function drawEnemies(){
                 case 'alien':
                     context.drawImage(loadedImages['enemyShip'], alien.x, alien.y, alien.width, alien.height);
                     break;
+                case 'boss':
+                    context.drawImage(loadedImages['enemyShip'], alien.x, alien.y, alien.width, alien.height);
+                    break;
                 case 'meteorite':
                     context.save(); 
                     context.translate(alien.x + alien.width / 2, alien.y + alien.height / 2);
@@ -570,15 +586,22 @@ function drawEnemies(){
                 case 'planet': 
                     context.drawImage(loadedImages['planet'], alien.x, alien.y, alien.width, alien.height);
                     break;
-                case 'gingerbread':
-                    context.drawImage(loadedImages['gingerbread'], alien.x, alien.y, alien.width, alien.height);
+                case 'beachball':
+                    context.drawImage(loadedImages['beachball'], alien.x, alien.y, alien.width, alien.height);
                     break;
-                case 'present':
-                    context.drawImage(loadedImages['present'], alien.x, alien.y, alien.width, alien.height);
+                case 'melon':
+                    context.drawImage(loadedImages['melon'], alien.x, alien.y, alien.width, alien.height);
                     break;
             }
+
+            drawHealth(alien);
         }
     }
+}
+function drawHealth(alien) {
+    context.font = "20px Arial";
+    context.fillStyle = alien.health >= Math.floor(alien.maxHealth / 2) ? "green" : "red";
+    context.fillText(alien.health, alien.x + (alien.width / 2 + 10), alien.y + alien.height);
 }
 function drawExplosion(){
     for(let i = explosionArray.length - 1; i >= 0; i--) {
@@ -594,19 +617,39 @@ function drawExplosion(){
     }
 }
 function drawShootFlash() {
-    if(shootFlash) {
-        context.drawImage(loadedImages['shoot'], shootFlash.x, shootFlash.y, unitSize * 1.5, unitSize * 2);
+    for (let i = 0; i < shootFlashes.length; i++) {
+        let shootFlash = shootFlashes[i];
+        context.drawImage(loadedImages[shootFlash.type == 'boss' ? 'bossShoot' : 'shipShoot'], shootFlash.x, shootFlash.y, unitSize * 1.5, unitSize * 2);
         shootFlash.timer--;
 
         if(shootFlash.timer <= 0) {
-            shootFlash = null;
+            shootFlashes.splice(i, 1)
         }
     }
 }
 function moveEnemies(deltaTime) {
     for(let i = 0; i < alienArray.length; i++){
         let alien = alienArray[i];
-        if(alien.alive){
+        if(alien.alive && alien.type == 'boss'){
+            const prevX = alien.x;
+            alien.x += bossVelocityX * deltaTime * 15;
+
+            if (alien.x !== prevX) redrawFrame = true;
+
+            if (alien.x >= gameBoard.width - alien.width) {
+                alien.x = gameBoard.width - alien.width;
+
+                bossVelocityX = -Math.abs(bossVelocityX);
+            }
+
+            if (alien.x <= 0) {
+                alien.x = 0;
+
+                bossVelocityX = Math.abs(bossVelocityX);
+            }
+
+            shootBullet({code: 'Space'}, 'boss')
+        } else {
             const prevY = alien.y;
             alien.y += alienVelocityY * deltaTime * 15;
 
@@ -614,19 +657,6 @@ function moveEnemies(deltaTime) {
 
             if(alien.type === 'meteorite') {
                 alien.rotation += alien.rotationSpeed * deltaTime * 5;
-            }
-
-            if(alien.y + alien.height >= gameBoard.height && alien.type != 'meteorite'){
-                running = false;
-            }
-
-            if(
-                alien.x < shipX + shipWidth &&
-                alien.x + alien.width > shipX &&
-                alien.y < shipY + shipHeight &&
-                alien.y + alien.height > shipY
-            ){
-                running = false;
             }
         }
     }
@@ -641,10 +671,10 @@ function changeDirection(event){
 
     switch(true){
         case(keyPressed === LEFT):
-        xVelocity = -unitSize;
+        ship.xVelocity = -unitSize;
         break;
         case(keyPressed === RIGHT):
-        xVelocity = unitSize;
+        ship.xVelocity = unitSize;
         break;
     }
 }
@@ -656,58 +686,91 @@ function stopShip(event){
 
     switch(true){
         case(keyPressed === LEFT):
-        xVelocity = 0;
+        ship.xVelocity = 0;
         break;
         case(keyPressed === RIGHT):
-        xVelocity = 0;
+        ship.xVelocity = 0;
         break;
     }
 }
-function shootBullet(event){
-    if(event.code === "Space" && canShoot && running && !paused){
-        canShoot = false;
+function shootBullet(event, name='ship') {
+    if (event.code !== "Space" || !running || paused) return;
 
-        let bullet = {
-            x: shipX + unitSize + 12,
-            y: shipY,
-            width: unitSize / 8,
-            height: unitSize / 2,
-            used: false
-        }
+    if ((name === 'ship' && !ship.canShoot) ||
+        (name === 'boss' && !bossEnemy.canShoot)) return
 
-        const clonedShootingSound = loadedSounds['shooting'].cloneNode();
-        clonedShootingSound.play();
+    if (name === 'boss' && bossEnemy === null) return
 
-        shootFlash = {
-            x: shipX + shipWidth / 2 - (unitSize * 1.5) / 2,
-            y: shipY - 50,
-            timer: 2
-        }
-
-        bulletArray.push(bullet);
-
-        redrawFrame = true;
+    if (name === 'ship') {
+        ship.canShoot = false;
 
         setTimeout(() => {
-            canShoot = true;
-        }, shootCooldown);
+            ship.canShoot = true;
+        }, ship.shootCooldown);
     }
+
+    if (name == 'boss') {
+        bossEnemy.canShoot = false;
+
+        setTimeout(() => {
+            if (bossEnemy !== null) {
+                bossEnemy.canShoot = true;
+            }
+        }, bossEnemy.shootCooldown);
+    }
+
+    createBullet(name);
 }
-function drawBullet(deltaTime){
-    for(let i = 0; i < bulletArray.length; i++){
+function createBullet(name) {
+    let isBoss = name === 'boss';
+    let entity = isBoss ? bossEnemy : ship;
+    let direction = isBoss ? 1 : -1;
+
+    let bullet = {
+        x: entity.x + (isBoss ? entity.width / 2: unitSize + 11),
+        y: entity.y + (isBoss ? entity.height : 0),
+        width: unitSize / 8,
+        height: unitSize / 2,
+        direction: direction,
+        color: isBoss ? "#FF6D00" : "#00E5FF"
+    };
+
+    const clonedShootingSound = loadedSounds['shooting'].cloneNode();
+    clonedShootingSound.play();
+
+    shootFlashes.push({
+        x: entity.x + entity.width / 2 - (unitSize * 1.5) / 2,
+        y: isBoss ? entity.y + entity.height : entity.y - 50,
+        type: isBoss ? 'boss' : 'ship',
+        timer: 2
+    });
+
+    bulletArray.push(bullet);
+
+    redrawFrame = true;
+}
+function moveBullets(deltaTime) {
+    for (let i = 0; i < bulletArray.length; i++) {
         let bullet = bulletArray[i];
-
-
-        bullet.y += bulletVelocityY * deltaTime * 15;
-
-        context.fillStyle = "white";
-
-        context.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        let prevY = bullet.y;
+        bullet.y += bulletVelocityY * bullet.direction * deltaTime * 15;
+        
+        if (prevY !== bullet.y) redrawFrame = true;
     }
-
     bulletArray = bulletArray.filter(b => b.y + b.height > 0);
 }
+function drawBullets(deltaTime){
+    for(let i = 0; i < bulletArray.length; i++){
+        let bullet = bulletArray[i];
+        context.fillStyle = bullet.color;
+        context.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+    }
+}
 function generateEnemy(){
+    generateBossEnemy();
+
+    if (bossEnemy !== null) return;
+
     let randomX = Math.floor(Math.random() * (gameBoard.width - alienWidth));
 
     const typeChance = Math.random();
@@ -721,6 +784,8 @@ function generateEnemy(){
             height: alienHeight,
             alive: true,
             type: 'planet',
+            health: 15,
+            maxHealth: 15,
             points: 100
         }
     } else if (typeChance < 0.05) {
@@ -730,7 +795,9 @@ function generateEnemy(){
             width: alienWidth - 15,
             height: alienHeight - 15,
             alive: true,
-            type: 'present',
+            type: 'melon',
+            health: 20,
+            maxHealth: 20,
             points: 100,
         };
     } else if (typeChance < 0.25) {
@@ -740,7 +807,9 @@ function generateEnemy(){
             width: alienWidth - 15,
             height: alienHeight - 15,
             alive: true,
-            type: 'gingerbread',
+            type: 'beachball',
+            health: 30,
+            maxHealth: 30,
             points: 50,
         };
     } else if(typeChance < 0.35) {
@@ -753,6 +822,8 @@ function generateEnemy(){
             height: alienHeight * scale,
             alive: true,
             type: 'meteorite',
+            health: Math.floor(20 * scale),
+            maxHealth: Math.floor(20 * scale),
             scale: scale,
             points: Math.floor(5 * scale),
             rotation: Math.random() * Math.PI * 2,
@@ -769,6 +840,8 @@ function generateEnemy(){
             height: alienHeight,
             alive: true,
             type: 'alien',
+            health: 35,
+            maxHealth: 35,
             points: 10
         }
     }
@@ -777,68 +850,138 @@ function generateEnemy(){
         alienArray.push(enemy);
     }
 }
-function generateMain() {
-    
-}
-function checkCollisions() {
-    for(let i = 0; i < alienArray.length; i++){
-        let alien = alienArray[i];
-        for(let j = 0; j < bulletArray.length; j++){
-            let bullet = bulletArray[j];
-
-            if(alien.alive &&
-                bullet.y < alien.y + alien.height && 
-                bullet.y + bullet.height > alien.y &&
-                bullet.x < alien.x + alien.width &&
-                bullet.x + bullet.width > alien.x
-            ){
-                alien.alive = false;
-                bulletArray.splice(j, 1);
-
-                if(alien.type === 'alien' || alien.type === 'meteorite'){
-                    const clonedExplosionSound = loadedSounds['explosion'].cloneNode();
-                    clonedExplosionSound.play();
-                } else {
-                    const clonedSpecialSound = loadedSounds['special'].cloneNode();
-                    clonedSpecialSound.play();
-                }
-
-                if(Math.random() < 0.01){
-                    merryChristmasTimer = 120;
-                }
-
-                explosionArray.push({
-                    x: alien.x + alien.width / 2 - alien.width / 2,
-                    y: alien.y + alien.height / 2 - alien.width / 2,
-                    width: alien.width,
-                    height: alien.height,
-                    timer: 2
-                });
-
-                score += alien.points;
-                gameScore.textContent = score;
-                break;
-            }
-        }
+function generateBossEnemy() {
+    if (bossEnemy !== null) {
+        return;
     }
 
-    alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
+    if (LEVEL_SETTINGS[currentLevel - 1].bossLevel) {
+        alienArray = [];
+
+        let bossWidth = alienWidth * 2;
+        let bossHeight = alienHeight * 2;
+
+        bossEnemy = {
+            x: gameBoard.width / 2 - bossWidth / 2,
+            y: gameBoard.width / 4 - bossHeight / 2,
+            width: bossWidth,
+            height: bossHeight,
+            canShoot: true,
+            shootCooldown: 1000,
+            alive: true,
+            type: 'boss',
+            health: 250,
+            points: 500
+        };
+
+        alienArray.push(bossEnemy);
+    }
+}
+function checkCollisions() {
+    for(let i = 0; i < bulletArray.length; i++) {
+        let bullet = bulletArray[i];
+        if (bulletArray[i].direction === 1) {
+            if(
+                bullet.y < ship.y + ship.height && 
+                bullet.y + bullet.height > ship.y &&
+                bullet.x < ship.x + ship.width &&
+                bullet.x + bullet.width > ship.x
+                ){
+                    running = false;
+                }
+        } else if (bulletArray[i].direction === -1) {
+            for (let j = 0; j < alienArray.length; j++) {
+                let alien = alienArray[j];
+                if(alien.alive &&
+                    bullet.y < alien.y + alien.height && 
+                    bullet.y + bullet.height > alien.y &&
+                    bullet.x < alien.x + alien.width &&
+                    bullet.x + bullet.width > alien.x
+                ){
+                    alien.health -= bulletDamage;
+
+                    if (alien.health <= 0) {
+                        alien.alive = false;
+
+                        if (alien.type === 'boss') {
+                            bossDefeated = true;
+                            bossEnemy = null;
+                        }
+
+                        if(alien.type === 'special'){
+                            const clonedSpecialSound = loadedSounds['special'].cloneNode();
+                            clonedSpecialSound.play();
+                        } else {
+                            const clonedExplosionSound = loadedSounds['explosion'].cloneNode();
+                            clonedExplosionSound.play();
+                        }
+
+                        explosionArray.push({
+                            x: alien.x + alien.width / 2 - alien.width / 2,
+                            y: alien.y + alien.height / 2 - alien.width / 2,
+                            width: alien.width,
+                            height: alien.height,
+                            timer: 2
+                        });
+
+                        score += alien.points;
+                        gameScore.textContent = score;
+                    }
+
+                    bulletArray.splice(i, 1);
+
+                    if(Math.random() < 0.01){
+                        merryChristmasTimer = 120;
+                    }
+            
+                    break;
+                }
+
+                if(alien.y + alien.height >= gameBoard.height && alien.type !== 'meteorite'){
+                    running = false;
+                }
+
+                if(
+                    alien.x < ship.x + ship.width &&
+                    alien.x + alien.width > ship.x &&
+                    alien.y < ship.y + ship.height &&
+                    alien.y + alien.height > ship.y
+                ){
+                    running = false;
+                }
+            }
+            alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
+        }
+    }
 }
 function checkUpgrades() {
     const nextLevelIndex = currentLevel;
+    
+    if (currentLevel > LEVEL_SETTINGS.length) return;
 
-    if(nextLevelIndex < LEVEL_SETTINGS.length){
-        const nextLevelSettings = LEVEL_SETTINGS[nextLevelIndex];
+    let levelUp = false;
 
-        if(score >= nextLevelSettings.scoreThreshold) {
-            applyLevelSettings(nextLevelIndex);
+    if (LEVEL_SETTINGS[currentLevel - 1].bossLevel) {
+        if (bossDefeated) {
+            levelUp = true;
         }
+    } else {
+        const nextLevelSettings = LEVEL_SETTINGS[nextLevelIndex];
+        if (score >= nextLevelSettings.scoreThreshold) {
+            levelUp = true;
+        }
+    }
+
+    if (levelUp) {
+        applyLevelSettings(nextLevelIndex);
     }
 }
 function applyLevelSettings(levelIndex) {
     const settings = LEVEL_SETTINGS[levelIndex];
 
     currentLevel = levelIndex + 1;
+    
+    bossDefeated = false;
 
     showLevelUpMessage(currentLevel);
 
@@ -846,6 +989,10 @@ function applyLevelSettings(levelIndex) {
     shootCooldown = settings.shootCooldown;
 
     enemySpawnInterval -= 100;
+
+    if (settings.bossLevel) {
+        generateBossEnemy();
+    }
 
     if(settings.backgroundSrc.endsWith('.mp4')){
         this.videoReady = false;
@@ -875,6 +1022,8 @@ function resetGame(){
         bulletArray = [];
         alienArray = [];
 
+        bossEnemy = null;
+
         score = 0;
         gameScore.textContent = score;
 
@@ -885,7 +1034,7 @@ function resetGame(){
             backGroundVideo.currentTime = 0;
         }
 
-        enemySpawnInterval = 1000;
+        enemySpawnInterval = 1500;
 
         clearIntervals();
 
