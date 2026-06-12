@@ -42,49 +42,49 @@ const LEVEL_SETTINGS = [
     {
         scoreThreshold: 0,
         backgroundSrc: BACKGROUNDS[4],
-        alienSpeed: 6.0,
+        enemySpeed: 6.0,
         shootCooldown: 250,
         bossLevel: false
     },
     {
         scoreThreshold: 500,
         backgroundSrc: BACKGROUNDS[7], 
-        alienSpeed: 8.0,               
+        enemySpeed: 8.0,               
         shootCooldown: 250,
         bossLevel: false
     },
     {
         scoreThreshold: 1000,
         backgroundSrc: BACKGROUNDS[1], 
-        alienSpeed: 10.0,               
+        enemySpeed: 10.0,               
         shootCooldown: 250,
         bossLevel: true
     },
     {
         scoreThreshold: 1500,
         backgroundSrc: BACKGROUNDS[2], 
-        alienSpeed: 12.0,               
+        enemySpeed: 12.0,               
         shootCooldown: 200,
         bossLevel: false
     },
     {
         scoreThreshold: 2000,
         backgroundSrc: BACKGROUNDS[3],
-        alienSpeed: 14.0,              
+        enemySpeed: 14.0,              
         shootCooldown: 200,
         bossLevel: false
     },
     {
         scoreThreshold: 2500,
         backgroundSrc: BACKGROUNDS[6],
-        alienSpeed: 18.0,              
+        enemySpeed: 18.0,              
         shootCooldown: 175,
         bossLevel: false
     },
     {
         scoreThreshold: 3000,
         backgroundSrc: BACKGROUNDS[5],
-        alienSpeed: 20.0,              
+        enemySpeed: 20.0,              
         shootCooldown: 175,
         bossLevel: true
     },
@@ -181,16 +181,16 @@ let bulletDamage = 25;
 
 let shootFlashes = [];
 
-let alienArray = [];
+let enemyArray = [];
 
 let bossEnemy = null;
 let bossDefeated = false;
 
-let alienVelocityY = 4.5;
+let enemyVelocityY = 4.5;
 let bossVelocityX = 5;
 
-let alienWidth = unitSize * 3;
-let alienHeight = unitSize * 3;
+let enemyWidth = unitSize * 3;
+let enemyHeight = unitSize * 3;
 
 let explosionArray = [];
 
@@ -583,42 +583,42 @@ function drawBackGround(){
     }
 }
 function drawEnemies(){
-    for(let i = 0; i < alienArray.length; i++){
-        let alien = alienArray[i];
-        if(alien.alive){
-            switch(alien.type) {
-                case 'alien':
-                    context.drawImage(loadedImages['enemyShip'], alien.x, alien.y, alien.width, alien.height);
+    for(let i = 0; i < enemyArray.length; i++){
+        let enemy = enemyArray[i];
+        if(enemy.alive){
+            switch(enemy.type) {
+                case 'enemy':
+                    context.drawImage(loadedImages['enemyShip'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
                 case 'boss':
-                    context.drawImage(loadedImages['enemyShip'], alien.x, alien.y, alien.width, alien.height);
+                    context.drawImage(loadedImages['enemyShip'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
                 case 'meteorite':
                     context.save(); 
-                    context.translate(alien.x + alien.width / 2, alien.y + alien.height / 2);
-                    context.rotate(alien.rotation); 
-                    context.drawImage(loadedImages['meteorite'], -alien.width / 2, -alien.height / 2, alien.width, alien.height);
+                    context.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    context.rotate(enemy.rotation); 
+                    context.drawImage(loadedImages['meteorite'], -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
                     context.restore();
                     break;
                 case 'planet': 
-                    context.drawImage(loadedImages['planet'], alien.x, alien.y, alien.width, alien.height);
+                    context.drawImage(loadedImages['planet'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
                 case 'beachball':
-                    context.drawImage(loadedImages['beachball'], alien.x, alien.y, alien.width, alien.height);
+                    context.drawImage(loadedImages['beachball'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
                 case 'melon':
-                    context.drawImage(loadedImages['melon'], alien.x, alien.y, alien.width, alien.height);
+                    context.drawImage(loadedImages['melon'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
             }
 
-            drawHealth(alien);
+            drawHealth(enemy);
         }
     }
 }
-function drawHealth(alien) {
+function drawHealth(enemy) {
     context.font = "20px Arial";
-    context.fillStyle = alien.health >= Math.floor(alien.maxHealth / 2) ? COLORS.status.optimal : COLORS.status.critical;
-    context.fillText(alien.health, alien.x + (alien.width / 2 + 10), alien.y + alien.height);
+    context.fillStyle = enemy.health >= Math.floor(enemy.maxHealth / 2) ? COLORS.status.optimal : COLORS.status.critical;
+    context.fillText(enemy.health, enemy.x + (enemy.width / 2 + 10), enemy.y + enemy.height);
 }
 function drawExplosion(){
     for(let i = explosionArray.length - 1; i >= 0; i--) {
@@ -645,40 +645,40 @@ function drawShootFlash() {
     }
 }
 function moveEnemies(deltaTime) {
-    for(let i = 0; i < alienArray.length; i++){
-        let alien = alienArray[i];
-        if(alien.alive && alien.type == 'boss'){
-            const prevX = alien.x;
-            alien.x += bossVelocityX * deltaTime * 15;
+    for(let i = 0; i < enemyArray.length; i++){
+        let enemy = enemyArray[i];
+        if(enemy.alive && enemy.type == 'boss'){
+            const prevX = enemy.x;
+            enemy.x += bossVelocityX * deltaTime * 15;
 
-            if (alien.x !== prevX) redrawFrame = true;
+            if (enemy.x !== prevX) redrawFrame = true;
 
-            if (alien.x >= gameBoard.width - alien.width) {
-                alien.x = gameBoard.width - alien.width;
+            if (enemy.x >= gameBoard.width - enemy.width) {
+                enemy.x = gameBoard.width - enemy.width;
 
                 bossVelocityX = -Math.abs(bossVelocityX);
             }
 
-            if (alien.x <= 0) {
-                alien.x = 0;
+            if (enemy.x <= 0) {
+                enemy.x = 0;
 
                 bossVelocityX = Math.abs(bossVelocityX);
             }
 
             shootBullet({code: 'Space'}, 'boss')
         } else {
-            const prevY = alien.y;
-            alien.y += alienVelocityY * deltaTime * 15;
+            const prevY = enemy.y;
+            enemy.y += enemyVelocityY * deltaTime * 15;
 
-            if (alien.y !== prevY) redrawFrame = true;
+            if (enemy.y !== prevY) redrawFrame = true;
 
-            if(alien.type === 'meteorite') {
-                alien.rotation += alien.rotationSpeed * deltaTime * 5;
+            if(enemy.type === 'meteorite') {
+                enemy.rotation += enemy.rotationSpeed * deltaTime * 5;
             }
         }
     }
 
-    alienArray = alienArray.filter(a => a.alive && a.y < gameBoard.height);
+    enemyArray = enemyArray.filter(a => a.alive && a.y < gameBoard.height);
 }
 function changeDirection(event){
     const keyPressed = event.keyCode;
@@ -788,7 +788,7 @@ function generateEnemy(){
 
     if (bossEnemy !== null) return;
 
-    let randomX = Math.floor(Math.random() * (gameBoard.width - alienWidth));
+    let randomX = Math.floor(Math.random() * (gameBoard.width - enemyWidth));
 
     const typeChance = Math.random();
     let enemy;
@@ -797,8 +797,8 @@ function generateEnemy(){
         enemy = {
             x: randomX,
             y: 0,
-            width: alienWidth,
-            height: alienHeight,
+            width: enemyWidth,
+            height: enemyHeight,
             alive: true,
             type: 'planet',
             health: 15,
@@ -809,8 +809,8 @@ function generateEnemy(){
         enemy = {
             x: randomX,
             y: 0,
-            width: alienWidth - 15,
-            height: alienHeight - 15,
+            width: enemyWidth - 15,
+            height: enemyHeight - 15,
             alive: true,
             type: 'melon',
             health: 20,
@@ -821,8 +821,8 @@ function generateEnemy(){
         enemy = {
             x: randomX,
             y: 0,
-            width: alienWidth - 15,
-            height: alienHeight - 15,
+            width: enemyWidth - 15,
+            height: enemyHeight - 15,
             alive: true,
             type: 'beachball',
             health: 30,
@@ -835,8 +835,8 @@ function generateEnemy(){
         enemy = {
             x: randomX,
             y: 0,
-            width: alienWidth * scale,
-            height: alienHeight * scale,
+            width: enemyWidth * scale,
+            height: enemyHeight * scale,
             alive: true,
             type: 'meteorite',
             health: Math.floor(20 * scale),
@@ -853,10 +853,10 @@ function generateEnemy(){
         enemy = {
             x: randomX,
             y: 0,
-            width: alienWidth,
-            height: alienHeight,
+            width: enemyWidth,
+            height: enemyHeight,
             alive: true,
-            type: 'alien',
+            type: 'enemy',
             health: 35,
             maxHealth: 35,
             points: 10
@@ -864,7 +864,7 @@ function generateEnemy(){
     }
 
     if(enemy){
-        alienArray.push(enemy);
+        enemyArray.push(enemy);
     }
 }
 function generateBossEnemy() {
@@ -873,10 +873,10 @@ function generateBossEnemy() {
     }
 
     if (LEVEL_SETTINGS[currentLevel - 1].bossLevel) {
-        alienArray = [];
+        enemyArray = [];
 
-        let bossWidth = alienWidth * 2;
-        let bossHeight = alienHeight * 2;
+        let bossWidth = enemyWidth * 2;
+        let bossHeight = enemyHeight * 2;
 
         bossEnemy = {
             x: gameBoard.width / 2 - bossWidth / 2,
@@ -891,7 +891,7 @@ function generateBossEnemy() {
             points: 500
         };
 
-        alienArray.push(bossEnemy);
+        enemyArray.push(bossEnemy);
     }
 }
 function checkCollisions() {
@@ -907,25 +907,25 @@ function checkCollisions() {
                     running = false;
                 }
         } else if (bullet.direction === -1) {
-            for (let j = alienArray.length - 1; j >= 0; j--) {
-                let alien = alienArray[j];
-                if(alien.alive &&
-                    bullet.y < alien.y + alien.height && 
-                    bullet.y + bullet.height > alien.y &&
-                    bullet.x < alien.x + alien.width &&
-                    bullet.x + bullet.width > alien.x
+            for (let j = enemyArray.length - 1; j >= 0; j--) {
+                let enemy = enemyArray[j];
+                if(enemy.alive &&
+                    bullet.y < enemy.y + enemy.height && 
+                    bullet.y + bullet.height > enemy.y &&
+                    bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x
                 ){
-                    alien.health -= bulletDamage;
+                    enemy.health -= bulletDamage;
 
-                    if (alien.health <= 0) {
-                        alien.alive = false;
+                    if (enemy.health <= 0) {
+                        enemy.alive = false;
 
-                        if (alien.type === 'boss') {
+                        if (enemy.type === 'boss') {
                             bossDefeated = true;
                             bossEnemy = null;
                         }
 
-                        if(alien.type === 'special'){
+                        if(enemy.type === 'special' || enemy.type === 'melon' || enemy.type === 'beachball'){
                             const clonedSpecialSound = loadedSounds['special'].cloneNode();
                             clonedSpecialSound.play();
                         } else {
@@ -934,14 +934,14 @@ function checkCollisions() {
                         }
 
                         explosionArray.push({
-                            x: alien.x,
-                            y: alien.y,
-                            width: alien.width,
-                            height: alien.height,
+                            x: enemy.x,
+                            y: enemy.y,
+                            width: enemy.width,
+                            height: enemy.height,
                             timer: 2
                         });
 
-                        score += alien.points;
+                        score += enemy.points;
                         gameScore.textContent = score;
                     }
 
@@ -953,23 +953,23 @@ function checkCollisions() {
         }
     }
 
-    for (let i = alienArray.length - 1; i >= 0; i--) {
-        let alien = alienArray[i];
+    for (let i = enemyArray.length - 1; i >= 0; i--) {
+        let enemy = enemyArray[i];
 
-        if (!alien.alive && alien.y < gameBoard.height) {
-            alienArray.splice(i, 1);
+        if (!enemy.alive && enemy.y < gameBoard.height) {
+            enemyArray.splice(i, 1);
             continue;
         }
 
-        if(alien.y + alien.height >= gameBoard.height && alien.type !== 'meteorite'){
+        if(enemy.y + enemy.height >= gameBoard.height && enemy.type !== 'meteorite'){
             running = false;
         }
 
         if(
-            alien.x < ship.x + ship.width &&
-            alien.x + alien.width > ship.x &&
-            alien.y < ship.y + ship.height &&
-            alien.y + alien.height > ship.y
+            enemy.x < ship.x + ship.width &&
+            enemy.x + enemy.width > ship.x &&
+            enemy.y < ship.y + ship.height &&
+            enemy.y + enemy.height > ship.y
             ){
             running = false;
         }
@@ -1006,7 +1006,7 @@ function applyLevelSettings(levelIndex) {
 
     showLevelUpMessage(currentLevel);
 
-    alienVelocityY = settings.alienSpeed;
+    enemyVelocityY = settings.enemySpeed;
     shootCooldown = settings.shootCooldown;
 
     enemySpawnInterval -= 100;
@@ -1041,7 +1041,7 @@ function resetGame(){
         redrawFrame = true;
 
         bulletArray = [];
-        alienArray = [];
+        enemyArray = [];
 
         bossEnemy = null;
 
