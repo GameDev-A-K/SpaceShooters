@@ -1,6 +1,6 @@
 # 🛰️ SpaceShooters
 
-**Version:** 2.0.4  
+**Version:** 2.0.6  
 **Author:** Alex Káčerík  
 **Description:** An action-packed arcade shooting game set in the depths of the universe. Pilot your starship through hostile star systems, battle relentless alien waves, and survive epic cosmic combat.
 
