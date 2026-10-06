@@ -22,8 +22,7 @@ const BACKGROUNDS = [
     "Assets/Images/Backgrounds/Default/space-background-3.mp4",
     "Assets/Images/Backgrounds/Default/space-background-4.png",
     "Assets/Images/Backgrounds/Default/space-background-5.gif",
-    "Assets/Images/Backgrounds/Special/Summer/special-background-0.png",
-    "Assets/Images/Backgrounds/Special/Summer/special-background-1.png"
+    "Assets/Images/Backgrounds/Special/Autumn/special-background-0.png",
 ];
 
 const backGroundVideo = document.createElement("video");
@@ -41,14 +40,14 @@ backGroundImage.src = BACKGROUNDS[1];
 const LEVEL_SETTINGS = [
     {
         scoreThreshold: 0,
-        backgroundSrc: BACKGROUNDS[4],
+        backgroundSrc: BACKGROUNDS[0],
         enemySpeed: 6.0,
         shootCooldown: 250,
         bossLevel: false
     },
     {
         scoreThreshold: 500,
-        backgroundSrc: BACKGROUNDS[7], 
+        backgroundSrc: BACKGROUNDS[6], 
         enemySpeed: 8.0,               
         shootCooldown: 250,
         bossLevel: false
@@ -69,14 +68,14 @@ const LEVEL_SETTINGS = [
     },
     {
         scoreThreshold: 2000,
-        backgroundSrc: BACKGROUNDS[3],
+        backgroundSrc: BACKGROUNDS[4],
         enemySpeed: 14.0,              
         shootCooldown: 200,
         bossLevel: false
     },
     {
         scoreThreshold: 2500,
-        backgroundSrc: BACKGROUNDS[6],
+        backgroundSrc: BACKGROUNDS[3],
         enemySpeed: 18.0,              
         shootCooldown: 175,
         bossLevel: false
@@ -105,8 +104,7 @@ const IMAGES = {
     bossShoot: "Assets/Images/Effects/boss-muzzle-flash.png",
     meteorite: "Assets/Images/Entities/meteorite.png",
     planet: "Assets/Images/Entities/planet.png",
-    beachball: "Assets/Images/Entities/Special/Summer/beach-ball.png",
-    melon: "Assets/Images/Entities/Special/Summer/melon.png"
+    pumpkin: "Assets/Images/Entities/Special/Autumn/pumpkin.png"
 };
 
 const loadedImages = {};
@@ -603,11 +601,8 @@ function drawEnemies(){
                 case 'planet': 
                     context.drawImage(loadedImages['planet'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
-                case 'beachball':
-                    context.drawImage(loadedImages['beachball'], enemy.x, enemy.y, enemy.width, enemy.height);
-                    break;
-                case 'melon':
-                    context.drawImage(loadedImages['melon'], enemy.x, enemy.y, enemy.width, enemy.height);
+                case 'pumpkin':
+                    context.drawImage(loadedImages['pumpkin'], enemy.x, enemy.y, enemy.width, enemy.height);
                     break;
             }
 
@@ -805,29 +800,17 @@ function generateEnemy(){
             maxHealth: 15,
             points: 100
         }
-    } else if (typeChance < 0.05) {
+    } else if (typeChance < 0.15) {
         enemy = {
             x: randomX,
             y: 0,
             width: enemyWidth - 15,
             height: enemyHeight - 15,
             alive: true,
-            type: 'melon',
+            type: 'pumpkin',
             health: 20,
             maxHealth: 20,
             points: 100,
-        };
-    } else if (typeChance < 0.25) {
-        enemy = {
-            x: randomX,
-            y: 0,
-            width: enemyWidth - 15,
-            height: enemyHeight - 15,
-            alive: true,
-            type: 'beachball',
-            health: 30,
-            maxHealth: 30,
-            points: 50,
         };
     } else if(typeChance < 0.35) {
         const scale = 0.5 + Math.random() * 0.85;
@@ -925,7 +908,7 @@ function checkCollisions() {
                             bossEnemy = null;
                         }
 
-                        if(enemy.type === 'special' || enemy.type === 'melon' || enemy.type === 'beachball'){
+                        if(enemy.type === 'special' || enemy.type === 'pumpkin') {
                             const clonedSpecialSound = loadedSounds['special'].cloneNode();
                             clonedSpecialSound.play();
                         } else {
