@@ -41,7 +41,7 @@ body {
     flex-direction: column;
     gap: 5px;
 }
-#summerDecorations {
+#autumnDecorations {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,11 +49,11 @@ body {
     gap: 0px;
     z-index: 9998;
     position: absolute;
-    top: 35px;
+    top: 45px;
 }
-#summerDecorations img {
-    height: 85px;
-    width: 100px;
+#autumnDecorations img {
+    height: 60px;
+    width: 110px;
 }
 #changeSkinContainer {
     display: flex;

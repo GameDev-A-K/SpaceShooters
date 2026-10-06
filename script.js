@@ -336,7 +336,7 @@ pauseBtn.addEventListener("click", togglePause);
 
 clearScoreBtn.addEventListener("click", clearScore);
 
-function gameStart(){
+function gameStart() {
     running = true;
     gameScore.textContent = score;
 
